@@ -24,10 +24,14 @@ word = re.compile(word, re.U)
 def basic_wordcount(text):
     words = 0
     chars = 0
+    hanzi = 0
     for w in word.findall(text):
         words += 1
         chars += len(w)
-    return words, chars, len(text)
+    for w in text:
+        if u'\u2e80' <= w <= u'\u9fff':
+            hanzi += 1
+    return words, chars, len(text), hanzi
 
 # infrastructure for custom word counters for different markup languages
 custom_wordcounters = {"Plain text": basic_wordcount}
@@ -138,10 +142,12 @@ class LatexWordCountCommand(sublime_plugin.TextCommand):
         total_chars = 0
         words = 0
         chars = 0
+        hanzis = 0
         for region in selected:
-            (rwords, rchars, rtotal) = wordcount_fn(self.view.substr(region))
+            (rwords, rchars, rtotal, rhanzi) = wordcount_fn(self.view.substr(region))
             words += rwords
             chars += rchars
+            hanzis += rhanzi
             total_chars += rtotal
 
         sublime.message_dialog('''\
@@ -150,6 +156,7 @@ Word count for %s
 Words:\t\t\t\t\t\t%d
 Characters (ignoring whitespace):\t%d
 Characters (with whitespace):\t%d
+East Asian Characters:\t\t\t\t%d
 Lines:\t\t\t\t\t\t%d
 
-%s''' % (scope, words, chars, total_chars, lines, language))
+%s''' % (scope, words, chars, total_chars, hanzis, lines, language))
